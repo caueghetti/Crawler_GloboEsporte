@@ -2,11 +2,13 @@ import time
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
-import json
-from regex__ import replace_caracter
-from datetime import datetime
+from regex__ import replace_caracter,replace_simbos
 from Log import log__
 from sys import argv
+from datetime import datetime
+from Paths__ import NewsPath
+from Files__ import CreateNewsFile,SaveOnJson,CreateFolders
+import os
 
 def open_browser():
     try:
@@ -28,7 +30,7 @@ def close_browser(driver):
 def change_page(driver,url,error):
     try:
         driver.get(url)
-        time.sleep(5)
+        time.sleep(2)
     except Exception as e:
         msg_error = 'ERRO AO ALTERAR PAGINA URL ({}) : {}'.format(url,e)
         print(msg_error)
@@ -77,65 +79,79 @@ def NV1_CollectTeam(driver,INI_URL):
         log__(msg_error)
         exit(1)
 
-def NV3_ColetaConteudo(driver,URL):
+def NV3_ColetaConteudo(driver,URL,tittle_):
     try:
         change_page(driver,URL,False)
-        texto_part = list(StartBeautifulSoup(driver).findAll("p",{"class":"content-text__container"}))
-        context = ''
-        for texto in texto_part:
-            context = '{} {}'.format(context,texto.text)
-        return replace_caracter(context)
+        context = list(StartBeautifulSoup(driver).findAll("p",{"class":"content-text__container"}))
+        CreateNewsFile(context,NewsPath(tittle_))
+        info_N3 = {}
+        date_ = StartBeautifulSoup(driver).find("p",{"class":"content-publication-data__updated"})
+        if date_ != None:
+            date_ = (str(date_.text).strip()[:17]).strip()
+            info_N3['data'] = date_
+        author_ = StartBeautifulSoup(driver).find("p",{"class":"content-publication-data__from"})
+        if author_ != None:
+            author_ = str(author_.text).strip()
+            author_ = author_[4:]
+            author_ = author_.strip().split('—')
+            if len(author_) == 2:
+                info_N3['lugar'] = replace_caracter(author_[1].strip())
+                info_N3['autor'] = replace_caracter(author_[0].strip())
+            else:
+                info_N3['autor'] = replace_caracter(author_[0].strip())
+        return info_N3
     except Exception as e:
         msg_error = 'ERRO AO REALIZAR COLETA NIVEL 3 NAVEGADOR : {}'.format(e)
         print(msg_error)
         log__(msg_error)
-        return ''
-
+        return {}
 
 def NV2_CollectNews(driver,info):
     try:
-        for i in range(len(info)-1):
+        for i in range(len(info)):
             url = info[i]
             print('{} - {}'.format(url['time'].upper(),datetime.now()))
             log__('{} - {}'.format(url['time'].upper(),datetime.now()))
             change_page(driver,url['url_time'],False)
-            news = []    
+            news = []
             for link_ in list(StartBeautifulSoup(driver).findAll("a",{"class":"feed-post-link gui-color-primary gui-color-hover"})):
-                news.append(
-                    {
-                        'titulo':replace_caracter(str(link_.text).strip()),
-                        'url_news':str(link_.get('href')).strip(),
-                        'conteudo':NV3_ColetaConteudo(driver,str(link_.get('href')).strip())
-                    }
-                )
-            url['noticias'] = news
+                tittle_ = replace_caracter(str(link_.text).strip())
+                if os.path.isfile(NewsPath(tittle_)):
+                    continue
+                info_N3 = NV3_ColetaConteudo(driver,str(link_.get('href')).strip(),tittle_)
+                new_ = {
+                    'titulo':tittle_,
+                    'url_news':str(link_.get('href')).strip()
+                }
+                for info_ in list(info_N3.keys()):
+                    new_[info_] = info_N3[info_]
+                news.append(new_)
+            if len(news) > 0:
+                url['noticias'] = news
             info[i] = url
-        return info
+        
+        info_filter = []
+        for i in range(len(info)):
+            if 'noticias' in list(info[i].keys()):
+                info_filter.append(info[i])
+        return info_filter
     except Exception as e:
         msg_error = 'ERRO AO REALIZAR COLETA NIVEL 2 NAVEGADOR : {}'.format(e)
         print(msg_error)
         log__(msg_error)
-
-def SaveOnJson(JSON_NAME,info):
-    try:
-        with open(JSON_NAME,'w') as arq:
-            json.dump(info,arq,indent=4,sort_keys=True)
-        arq.close()
-    except Exception as e:
-        msg_error = 'ERRO AO CRIAR JSON : {}'.format(e)
-        print(msg_error)
-        log__(msg_error)
+        return []
 
 def MAIN(INI_URL):
     try:
+        CreateFolders()
         log__('INICIO - {}'.format(datetime.now()))
         driver = open_browser()
         info = NV1_CollectTeam(driver,INI_URL)
         info = NV2_CollectNews(driver,info)
         log__('FIM COLETA - {}'.format(datetime.now()))
         log__('INICIO SAVE JSON - {}'.format(datetime.now()))
-        SaveOnJson('info_times_globo.json',info)
-        log__('FIM SABE JSON - {}'.format(datetime.now()))
+        SaveOnJson(info)
+        log__('FIM SAVE JSON - {}'.format(datetime.now()))
     except Exception as e:
         msg_error = 'ERRO MAIN : {}'.format(e)
         print(msg_error)

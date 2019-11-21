@@ -23,8 +23,26 @@ Dict_Char = {
     'ü':'u',
     'ç':'c',
     'ñ':'n',
+    '*':''
+}
+
+Dict_simbolos = {
+    '.':'',
+    '!':'',
+    '?':'',
+    '@':'',
+    ';':'',
+    ',':'',
+    '#':'',
+    '%':'',
     '&':'',
-    'º':''
+    'º':'',
+    '*':'',
+    '(':'',
+    ')':'',
+    '-':'',
+    '"':'',
+    "'":''
 }
 
 def replace_caracter(phrase):
@@ -35,3 +53,11 @@ def replace_caracter(phrase):
         return phrase
     except Exception as e:
         print('ERRO AO REMOVER CARACTER ESPECIAL : {}'.format(e))
+
+def replace_simbos(phrase):
+    try:
+        for l in list(Dict_simbolos.keys()):
+            phrase = phrase.replace(l,Dict_simbolos[l])
+        return phrase
+    except Exception as e:
+        print('ERRO AO REMOVER CARACTER ESPECIAL (SIMBOLOS): {}'.format(e))

@@ -12,7 +12,6 @@ def current_path():
 
 def NewsPath(tittle_):
     try:
-        tittle_ = tittle_.replace(' ','_').upper()
         path = '{}/Noticias/{}.txt'.format(current_path(),replace_simbos(tittle_))
         return path
     except Exception as e:

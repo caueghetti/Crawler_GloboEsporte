@@ -1,8 +1,8 @@
 # ------- Executar comandos para baixar Libs -------
-pip install pymongo
-pip install datetime
-pip install bs4
-pip install selenium
+- pip install pymongo
+- pip install datetime
+- pip install bs4
+- pip install selenium
 
 # ------- Scripts -------
 - Principal : main.py
@@ -16,7 +16,7 @@ pip install selenium
 Ao Executar serão criadas as pastas Log e Noticias
 
 - Executar atraves de script sh Linux
-	sh scraping.sh
+	- sh scraping.sh
 
 # ------- Serão criadas as pastas Log e Noticias -------
 - Na pasta Log encontramos um arquivo com as informações sobre as ultimas execuções
@@ -24,11 +24,11 @@ Ao Executar serão criadas as pastas Log e Noticias
 - As informações das noticias são armazenadas no MongoDB
 
 # ------- Informações MongoDB -------
-db = db_crawler_globo
-collection = existe uma collection para cada time
-Document = cada noticias é um documento
-Server = localhost
-port = 27017
+- db = db_crawler_globo
+- collection = existe uma collection para cada time
+- Document = cada noticias é um documento
+- Server = localhost
+- port = 27017
 
 - O Crawler Realiza a validação no Mongo para saber se a noticia ja foi coletada antes de realizar a Coleta
 
